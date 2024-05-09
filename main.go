@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"go-rest-api/controllers"
 
 	"github.com/gin-gonic/gin"
 )
@@ -12,14 +13,19 @@ func main() {
 
 	//logger
 	r.Use(gin.Logger())
+	r.Use(testMiddleware)
 
-	r.GET("/hello", func(ctx *gin.Context) {
-		ctx.IndentedJSON(200, map[string]any{
-			"data": "test",
-		})
-	})
+	userContoller := controllers.NewAuthController()
+
+	api := r.Group("/api")
+
+	api.POST("/login", userContoller.Login)
 
 	r.Run(":8000")
 
 	fmt.Println("Running on port : 8000")
+}
+
+func testMiddleware(c *gin.Context) {
+	c.Next()
 }
