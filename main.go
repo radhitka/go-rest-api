@@ -5,6 +5,7 @@ import (
 	"go-rest-api/controllers"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 )
 
 func main() {
@@ -15,7 +16,9 @@ func main() {
 	r.Use(gin.Logger())
 	r.Use(testMiddleware)
 
-	userContoller := controllers.NewAuthController()
+	validate := validator.New()
+
+	userContoller := controllers.NewAuthController(validate)
 
 	api := r.Group("/api")
 
