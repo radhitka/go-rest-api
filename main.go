@@ -2,13 +2,23 @@ package main
 
 import (
 	"fmt"
+	"go-rest-api/config"
 	"go-rest-api/controllers"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+	"github.com/joho/godotenv"
 )
 
 func main() {
+
+	err := godotenv.Load(".env")
+
+	if err != nil {
+		panic("Error loading .env file")
+	}
+
+	db := config.SetUpDatabase()
 
 	r := gin.Default()
 
@@ -18,11 +28,12 @@ func main() {
 
 	validate := validator.New()
 
-	userContoller := controllers.NewAuthController(validate)
+	userContoller := controllers.NewAuthController(validate, db)
 
 	api := r.Group("/api")
 
 	api.POST("/login", userContoller.Login)
+	api.POST("/register", userContoller.Register)
 
 	r.Run(":8000")
 
