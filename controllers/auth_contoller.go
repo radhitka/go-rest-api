@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 
 	"github.com/go-playground/validator/v10"
@@ -72,9 +73,46 @@ func (ac *AuthController) Register(ctx *gin.Context) {
 		})
 		return
 	}
-	var user []model.User
 
-	err = ac.DB.Select("name", "username").Find(&user).Error
+	var user model.User
+
+	err = ac.DB.Take(&user, "username = ?", registerRequest.Username).Error
+
+	if err != nil && err != gorm.ErrRecordNotFound {
+
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": err.Error(),
+		})
+		return
+	}
+
+	if user.Username != "" {
+
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": "Username sudah digunakan",
+		})
+		return
+	}
+
+	newPassword := []byte(registerRequest.Password)
+
+	hashedPassword, err := bcrypt.GenerateFromPassword(newPassword, bcrypt.DefaultCost)
+
+	if err != nil {
+
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": err.Error(),
+		})
+		return
+	}
+
+	user = model.User{
+		Name:     registerRequest.Name,
+		Username: registerRequest.Username,
+		Password: string(hashedPassword),
+	}
+
+	err = ac.DB.Create(&user).Error
 
 	if err != nil {
 
@@ -85,8 +123,7 @@ func (ac *AuthController) Register(ctx *gin.Context) {
 	}
 
 	ctx.JSON(200, gin.H{
-		"data":    user,
-		"message": "Login Success",
+		"message": "Register Success",
 	})
 
 }
