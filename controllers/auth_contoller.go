@@ -3,8 +3,10 @@ package controllers
 import (
 	"go-rest-api/model"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 
@@ -33,6 +35,8 @@ type Register struct {
 	Password string `form:"password" validate:"required"`
 }
 
+var secretKey = []byte("my-sceret")
+
 func (ac *AuthController) Login(ctx *gin.Context) {
 
 	var loginRequest LoginRequest
@@ -50,9 +54,63 @@ func (ac *AuthController) Login(ctx *gin.Context) {
 	}
 
 	username := loginRequest.Username
+	password := loginRequest.Password
+
+	var user model.User
+
+	err = ac.DB.Take(&user, "username = ?", username).Error
+	if err != nil && err != gorm.ErrRecordNotFound {
+
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": err.Error(),
+		})
+
+		return
+	}
+
+	if err == gorm.ErrRecordNotFound {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": "Username atau Password salah",
+		})
+
+		return
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+	if err != nil && err != bcrypt.ErrMismatchedHashAndPassword {
+
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": err.Error(),
+		})
+
+		return
+	}
+
+	if err == bcrypt.ErrMismatchedHashAndPassword {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": "Username atau Password salah",
+		})
+
+		return
+	}
+
+	createToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"username": username,
+		"exp":      time.Now().Add(time.Hour * 24).Unix(),
+	})
+
+	token, err := createToken.SignedString(secretKey)
+
+	if err != nil {
+
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": err.Error(),
+		})
+		return
+	}
 
 	ctx.JSON(200, gin.H{
-		"data":    username,
+		"token":   token,
 		"message": "Login Success",
 	})
 
