@@ -1,8 +1,10 @@
 package controllers
 
 import (
+	"fmt"
 	"go-rest-api/model"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -34,8 +36,6 @@ type Register struct {
 	Username string `form:"username" validate:"required"`
 	Password string `form:"password" validate:"required"`
 }
-
-var secretKey = []byte("my-sceret")
 
 func (ac *AuthController) Login(ctx *gin.Context) {
 
@@ -98,6 +98,10 @@ func (ac *AuthController) Login(ctx *gin.Context) {
 		"username": username,
 		"exp":      time.Now().Add(time.Hour * 24).Unix(),
 	})
+
+	secretKey := []byte(os.Getenv("JWT_KEY"))
+
+	fmt.Println(secretKey)
 
 	token, err := createToken.SignedString(secretKey)
 
