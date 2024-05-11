@@ -31,6 +31,7 @@ func main() {
 	validate := validator.New()
 
 	userContoller := controllers.NewAuthController(validate, db)
+	bookController := controllers.NewBookController(validate, db)
 
 	api := r.Group("/api")
 
@@ -39,11 +40,9 @@ func main() {
 
 	api.Use(authMiddleware)
 
-	api.GET("/test", func(ctx *gin.Context) {
-		ctx.JSON(200, gin.H{
-			"message": "Yey",
-		})
-	})
+	book := api.Group("/books")
+
+	book.GET("/", bookController.GetBooks)
 
 	r.Run(":8000")
 
