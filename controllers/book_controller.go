@@ -3,6 +3,7 @@ package controllers
 import (
 	"go-rest-api/model"
 	"go-rest-api/utils"
+	"mime/multipart"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -61,6 +62,37 @@ func (bc *BookController) GetBooks(ctx *gin.Context) {
 
 }
 
+func (bc *BookController) DetailBooks(ctx *gin.Context) {
+
+	id := ctx.Param("id")
+
+	var book model.Book
+
+	res := utils.NewResponseData()
+
+	err := bc.DB.First(&book, "id = ?", id).Error
+
+	if err != nil && err != gorm.ErrRecordNotFound {
+		res.WithMessage(err.Error()).InternalServerError()
+
+		ctx.JSON(res.StatusCode, res)
+		return
+	}
+
+	if err == gorm.ErrRecordNotFound {
+		res.WithMessage("Buku tidak ditemukan!").NotFound()
+
+		ctx.JSON(res.StatusCode, res)
+		return
+	}
+
+	book.Cover = "asset/images/" + book.Cover
+
+	res.WithData(book).SuccessOk()
+
+	ctx.JSON(res.StatusCode, res)
+}
+
 func (bc *BookController) AddBooks(ctx *gin.Context) {
 	bookRequest := model.Book{}
 	err := ctx.Bind(&bookRequest)
@@ -91,10 +123,7 @@ func (bc *BookController) AddBooks(ctx *gin.Context) {
 		return
 	}
 
-	newFileName := utils.NewFileName(cover.Filename)
-
-	path := "assets/images/" + newFileName
-	err = ctx.SaveUploadedFile(cover, path)
+	newFileName, err := uploadFile(ctx, cover)
 
 	if err != nil {
 		res.WithMessage(err.Error()).InternalServerError()
@@ -118,33 +147,92 @@ func (bc *BookController) AddBooks(ctx *gin.Context) {
 	ctx.JSON(res.StatusCode, res)
 }
 
-func (bc *BookController) DetailBooks(ctx *gin.Context) {
+func (bc *BookController) UpdateBooks(ctx *gin.Context) {
 
 	id := ctx.Param("id")
 
-	var book model.Book
+	// var bookModel model.Book
+
+	bookRequest := model.Book{}
+	err := ctx.Bind(&bookRequest)
 
 	res := utils.NewResponseData()
 
-	err := bc.DB.First(&book, "id = ?", id).Error
+	if err != nil {
+		res.WithMessage(err.Error()).BadRequest()
 
-	if err != nil && err != gorm.ErrRecordNotFound {
+		ctx.JSON(res.StatusCode, res)
+		return
+	}
+
+	err = bc.validate.StructExcept(bookRequest, "CoverUpload")
+
+	if err != nil {
+		res.WithMessage(err.Error()).BadRequest()
+
+		ctx.JSON(res.StatusCode, res)
+		return
+	}
+
+	err = bc.DB.Select("cover").First(&bookRequest, "id = ?", id).Error
+
+	if err != nil {
 		res.WithMessage(err.Error()).InternalServerError()
 
 		ctx.JSON(res.StatusCode, res)
 		return
 	}
 
-	if err == gorm.ErrRecordNotFound {
-		res.WithMessage("Buku tidak ditemukan!").NotFound()
+	handleUpload(ctx, "cover", &bookRequest)
+
+	err = bc.DB.Model(&model.Book{}).Where("id = ?", id).Updates(bookRequest).Error
+
+	if err != nil {
+		res.WithMessage(err.Error()).InternalServerError()
 
 		ctx.JSON(res.StatusCode, res)
 		return
 	}
 
-	book.Cover = "asset/images/" + book.Cover
-
-	res.WithData(book).SuccessOk()
-
+	res.SuccessCreated()
 	ctx.JSON(res.StatusCode, res)
+}
+
+func uploadFile(ctx *gin.Context, file *multipart.FileHeader) (string, error) {
+	newFileName := utils.NewFileName(file.Filename)
+
+	path := "assets/images/" + newFileName
+	err := ctx.SaveUploadedFile(file, path)
+
+	if err != nil {
+
+		return "", err
+	}
+	return newFileName, nil
+
+}
+
+func handleUpload(ctx *gin.Context, name string, book *model.Book) error {
+
+	cover, err := ctx.FormFile(name)
+
+	if err != nil && err != http.ErrMissingFile {
+
+		return err
+	}
+
+	if err == http.ErrMissingFile {
+
+	} else {
+		newFileName, err := uploadFile(ctx, cover)
+
+		if err != nil {
+			return err
+		}
+
+		book.Cover = newFileName
+	}
+
+	return nil
+
 }

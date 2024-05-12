@@ -10,7 +10,7 @@ type Book struct {
 	CoverUpload *multipart.FileHeader `gorm:"-" json:"-" form:"cover" validate:"required"`
 	Author      string                `gorm:"column:author" json:"author" form:"author" validate:"required"`
 	Publisher   string                `gorm:"column:publisher" json:"publisher" form:"publisher" validate:"required"`
-	IsPublished bool                  `gorm:"column:is_published" json:"is_published" form:"is_published" validate:"required"`
+	IsPublished *bool                 `gorm:"column:is_published" json:"is_published" form:"is_published" validate:"required"`
 }
 
 func (b *Book) TableName() string {

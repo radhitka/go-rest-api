@@ -54,6 +54,7 @@ func main() {
 	book.GET("/", bookController.GetBooks)
 	book.GET("/detail/:id", bookController.DetailBooks)
 	book.POST("/add", bookController.AddBooks)
+	book.POST("/update/:id", bookController.UpdateBooks)
 
 	r.Run("localhost:3000")
 
