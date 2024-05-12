@@ -114,25 +114,7 @@ func (bc *BookController) AddBooks(ctx *gin.Context) {
 		return
 	}
 
-	cover, err := ctx.FormFile("cover")
-
-	if err != nil {
-		res.WithMessage(err.Error()).BadRequest()
-
-		ctx.JSON(res.StatusCode, res)
-		return
-	}
-
-	newFileName, err := uploadFile(ctx, cover)
-
-	if err != nil {
-		res.WithMessage(err.Error()).InternalServerError()
-
-		ctx.JSON(res.StatusCode, res)
-		return
-	}
-
-	bookRequest.Cover = newFileName
+	handleUpload(ctx, "cover", &bookRequest)
 
 	err = bc.DB.Create(&bookRequest).Error
 
