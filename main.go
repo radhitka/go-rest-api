@@ -52,6 +52,7 @@ func main() {
 	book := api.Group("/books")
 
 	book.GET("/", bookController.GetBooks)
+	book.GET("/detail/:id", bookController.DetailBooks)
 	book.POST("/add", bookController.AddBooks)
 
 	r.Run("localhost:3000")

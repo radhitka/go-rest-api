@@ -51,6 +51,10 @@ func (bc *BookController) GetBooks(ctx *gin.Context) {
 		}
 	}
 
+	for i := 0; i < len(books); i++ {
+		books[i].Cover = "assets/images/" + books[i].Cover
+	}
+
 	res.WithData(books).SuccessOk()
 
 	ctx.IndentedJSON(http.StatusOK, res)
@@ -111,5 +115,36 @@ func (bc *BookController) AddBooks(ctx *gin.Context) {
 	}
 
 	res.SuccessCreated()
+	ctx.JSON(res.StatusCode, res)
+}
+
+func (bc *BookController) DetailBooks(ctx *gin.Context) {
+
+	id := ctx.Param("id")
+
+	var book model.Book
+
+	res := utils.NewResponseData()
+
+	err := bc.DB.First(&book, "id = ?", id).Error
+
+	if err != nil && err != gorm.ErrRecordNotFound {
+		res.WithMessage(err.Error()).InternalServerError()
+
+		ctx.JSON(res.StatusCode, res)
+		return
+	}
+
+	if err == gorm.ErrRecordNotFound {
+		res.WithMessage("Buku tidak ditemukan!").NotFound()
+
+		ctx.JSON(res.StatusCode, res)
+		return
+	}
+
+	book.Cover = "asset/images/" + book.Cover
+
+	res.WithData(book).SuccessOk()
+
 	ctx.JSON(res.StatusCode, res)
 }

@@ -3,7 +3,7 @@ package model
 import "mime/multipart"
 
 type Book struct {
-	ID          int                   `gorm:"column:id;primary_key;autoIncrement" json:"-"`
+	ID          int                   `gorm:"column:id;primary_key;autoIncrement" json:"id"`
 	Title       string                `gorm:"column:title" json:"title" form:"title" validate:"required"`
 	TotalPages  int                   `gorm:"column:total_pages" json:"total_pages" form:"total_pages" validate:"required"`
 	Cover       string                `gorm:"column:cover" json:"cover"`

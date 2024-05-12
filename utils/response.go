@@ -33,6 +33,13 @@ func (r *ResponseData) SuccessCreated() {
 	}
 }
 
+func (r *ResponseData) NotFound() {
+	r.StatusCode = http.StatusNotFound
+	if r.Message == "" {
+		r.Message = http.StatusText(http.StatusNotFound)
+	}
+}
+
 func (r *ResponseData) InternalServerError() {
 	r.StatusCode = http.StatusInternalServerError
 	if r.Message == "" {
