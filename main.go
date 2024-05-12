@@ -6,6 +6,7 @@ import (
 	"go-rest-api/controllers"
 	"net/http"
 	"os"
+	"reflect"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -30,6 +31,14 @@ func main() {
 
 	validate := validator.New()
 
+	validate.RegisterTagNameFunc(func(fld reflect.StructField) string {
+		name := fld.Tag.Get("form")
+		if name == "" {
+			name = fld.Name
+		}
+		return name
+	})
+
 	userContoller := controllers.NewAuthController(validate, db)
 	bookController := controllers.NewBookController(validate, db)
 
@@ -43,10 +52,11 @@ func main() {
 	book := api.Group("/books")
 
 	book.GET("/", bookController.GetBooks)
+	book.POST("/add", bookController.AddBooks)
 
-	r.Run(":8000")
+	r.Run("localhost:3000")
 
-	fmt.Println("Running on port : 8000")
+	fmt.Println("Running on port : 3000")
 }
 
 func authMiddleware(c *gin.Context) {

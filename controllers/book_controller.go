@@ -56,3 +56,60 @@ func (bc *BookController) GetBooks(ctx *gin.Context) {
 	ctx.IndentedJSON(http.StatusOK, res)
 
 }
+
+func (bc *BookController) AddBooks(ctx *gin.Context) {
+	bookRequest := model.Book{}
+	err := ctx.Bind(&bookRequest)
+
+	res := utils.NewResponseData()
+	if err != nil {
+		res.WithMessage(err.Error()).BadRequest()
+
+		ctx.JSON(res.StatusCode, res)
+		return
+	}
+
+	err = bc.validate.Struct(bookRequest)
+
+	if err != nil {
+		res.WithMessage(err.Error()).BadRequest()
+
+		ctx.JSON(res.StatusCode, res)
+		return
+	}
+
+	cover, err := ctx.FormFile("cover")
+
+	if err != nil {
+		res.WithMessage(err.Error()).BadRequest()
+
+		ctx.JSON(res.StatusCode, res)
+		return
+	}
+
+	newFileName := utils.NewFileName(cover.Filename)
+
+	path := "assets/images/" + newFileName
+	err = ctx.SaveUploadedFile(cover, path)
+
+	if err != nil {
+		res.WithMessage(err.Error()).InternalServerError()
+
+		ctx.JSON(res.StatusCode, res)
+		return
+	}
+
+	bookRequest.Cover = newFileName
+
+	err = bc.DB.Create(&bookRequest).Error
+
+	if err != nil {
+		res.WithMessage(err.Error()).InternalServerError()
+
+		ctx.JSON(res.StatusCode, res)
+		return
+	}
+
+	res.SuccessCreated()
+	ctx.JSON(res.StatusCode, res)
+}

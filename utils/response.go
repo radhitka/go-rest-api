@@ -12,24 +12,39 @@ func NewResponseData() *ResponseData {
 	return &ResponseData{}
 }
 
+func DefaultSuccessOK() *ResponseData {
+	return &ResponseData{
+		StatusCode: http.StatusOK,
+		Message:    http.StatusText(http.StatusOK),
+	}
+}
+
 func (r *ResponseData) SuccessOk() {
 	r.StatusCode = http.StatusOK
-	r.Message = http.StatusText(http.StatusOK)
+	if r.Message == "" {
+		r.Message = http.StatusText(http.StatusOK)
+	}
 }
 
 func (r *ResponseData) SuccessCreated() {
 	r.StatusCode = http.StatusCreated
-	r.Message = http.StatusText(http.StatusCreated)
+	if r.Message == "" {
+		r.Message = http.StatusText(http.StatusCreated)
+	}
 }
 
 func (r *ResponseData) InternalServerError() {
 	r.StatusCode = http.StatusInternalServerError
-	r.Message = http.StatusText(http.StatusInternalServerError)
+	if r.Message == "" {
+		r.Message = http.StatusText(http.StatusInternalServerError)
+	}
 }
 
 func (r *ResponseData) BadRequest() {
 	r.StatusCode = http.StatusBadRequest
-	r.Message = http.StatusText(http.StatusBadRequest)
+	if r.Message == "" {
+		r.Message = http.StatusText(http.StatusBadRequest)
+	}
 }
 
 func (r *ResponseData) WithData(data any) *ResponseData {
