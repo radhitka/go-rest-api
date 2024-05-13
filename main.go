@@ -26,9 +26,6 @@ func main() {
 
 	r := gin.Default()
 
-	//logger
-	r.Use(gin.Logger())
-
 	validate := validator.New()
 
 	validate.RegisterTagNameFunc(func(fld reflect.StructField) string {
@@ -55,6 +52,7 @@ func main() {
 	book.GET("/detail/:id", bookController.DetailBooks)
 	book.POST("/add", bookController.AddBooks)
 	book.POST("/update/:id", bookController.UpdateBooks)
+	book.DELETE("/delete/:id", bookController.DeleteBook)
 
 	r.Run("localhost:3000")
 

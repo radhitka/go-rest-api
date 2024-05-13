@@ -5,6 +5,7 @@ import (
 	"go-rest-api/utils"
 	"mime/multipart"
 	"net/http"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -177,6 +178,41 @@ func (bc *BookController) UpdateBooks(ctx *gin.Context) {
 	}
 
 	res.SuccessCreated()
+	ctx.JSON(res.StatusCode, res)
+}
+
+func (bc *BookController) DeleteBook(ctx *gin.Context) {
+	id := ctx.Param("id")
+
+	var book model.Book
+
+	err := bc.DB.First(&book, "id = ?", id).Error
+
+	res := utils.NewResponseData()
+
+	if err != nil && err != gorm.ErrRecordNotFound {
+		res.WithMessage(err.Error()).InternalServerError()
+		ctx.JSON(res.StatusCode, res)
+		return
+	}
+
+	if err == gorm.ErrRecordNotFound {
+		res.WithMessage("Buku tidak ada atau sudah dihapus").NotFound()
+		ctx.JSON(res.StatusCode, res)
+		return
+	}
+
+	_ = os.Remove("assets/images/" + book.Cover)
+
+	err = bc.DB.Delete(&book).Error
+
+	if err != nil {
+		res.WithMessage(err.Error()).InternalServerError()
+		ctx.JSON(res.StatusCode, res)
+		return
+	}
+
+	res.WithMessage("Success Delete").SuccessOk()
 	ctx.JSON(res.StatusCode, res)
 }
 
