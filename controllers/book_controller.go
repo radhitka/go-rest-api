@@ -58,7 +58,7 @@ func (bc *BookController) GetBooks(ctx *gin.Context) {
 
 		res.WithMessage(err.Error()).InternalServerError()
 
-		ctx.IndentedJSON(http.StatusInternalServerError, res)
+		ctx.JSON(http.StatusInternalServerError, res)
 		return
 	}
 
@@ -68,7 +68,7 @@ func (bc *BookController) GetBooks(ctx *gin.Context) {
 
 	res.WithData(books).SuccessOk()
 
-	ctx.IndentedJSON(http.StatusOK, res)
+	ctx.JSON(http.StatusOK, res)
 
 }
 
