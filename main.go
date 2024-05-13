@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"go-rest-api/config"
 	"go-rest-api/controllers"
+	"go-rest-api/utils"
 	"net/http"
-	"os"
 	"reflect"
 
 	"github.com/gin-gonic/gin"
@@ -54,9 +54,11 @@ func main() {
 	book.POST("/update/:id", bookController.UpdateBooks)
 	book.DELETE("/delete/:id", bookController.DeleteBook)
 
-	r.Run("localhost:3000")
+	port := utils.Env("PORT", "3000")
 
-	fmt.Println("Running on port : 3000")
+	r.Run(fmt.Sprintf("localhost:%s", port))
+
+	fmt.Printf("Running on port : %s", port)
 }
 
 func authMiddleware(c *gin.Context) {
@@ -73,7 +75,7 @@ func authMiddleware(c *gin.Context) {
 
 	token, err := jwt.Parse(authHeader, func(t *jwt.Token) (interface{}, error) {
 
-		return []byte(os.Getenv("JWT_KEY")), nil
+		return []byte(utils.GetJwtKey()), nil
 	})
 
 	if err != nil {

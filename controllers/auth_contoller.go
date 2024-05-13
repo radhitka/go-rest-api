@@ -3,8 +3,9 @@ package controllers
 import (
 	"fmt"
 	"go-rest-api/model"
+	"go-rest-api/utils"
 	"net/http"
-	"os"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -94,12 +95,14 @@ func (ac *AuthController) Login(ctx *gin.Context) {
 		return
 	}
 
+	hour, _ := strconv.Atoi(utils.Env("JWT_EXP", "24"))
+	fmt.Println(hour)
 	createToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"username": username,
-		"exp":      time.Now().Add(time.Hour * 24).Unix(),
+		"exp":      time.Now().Add(time.Hour * time.Duration(hour)).Unix(),
 	})
 
-	secretKey := []byte(os.Getenv("JWT_KEY"))
+	secretKey := []byte(utils.GetJwtKey())
 
 	fmt.Println(secretKey)
 
