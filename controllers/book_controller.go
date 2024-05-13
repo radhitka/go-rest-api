@@ -17,6 +17,11 @@ type BookController struct {
 	DB       *gorm.DB
 }
 
+type BookFilterRequest struct {
+	Query       string `form:"query"`
+	IsPublished *bool  `form:"is_published"`
+}
+
 func NewBookController(validate *validator.Validate, db *gorm.DB) *BookController {
 	return &BookController{
 		validate: validate,
@@ -25,9 +30,27 @@ func NewBookController(validate *validator.Validate, db *gorm.DB) *BookControlle
 }
 
 func (bc *BookController) GetBooks(ctx *gin.Context) {
+
+	var bookFilterRequest BookFilterRequest
+
+	ctx.Bind(&bookFilterRequest)
+
 	var books []model.Book
 
-	row, err := bc.DB.Raw("select id,title,total_pages,cover,author,publisher,is_published from books").Rows()
+	row := bc.DB
+
+	if bookFilterRequest.Query != "" {
+
+		query := "%" + bookFilterRequest.Query + "%"
+
+		row = row.Where("title LIKE ? OR author LIKE ? OR publisher LIKE ?", query, query, query)
+	}
+
+	if bookFilterRequest.IsPublished != nil {
+		row = row.Where("is_published = ?", *bookFilterRequest.IsPublished)
+	}
+
+	err := row.Find(&books).Error
 
 	res := utils.NewResponseData()
 
@@ -37,20 +60,6 @@ func (bc *BookController) GetBooks(ctx *gin.Context) {
 
 		ctx.IndentedJSON(http.StatusInternalServerError, res)
 		return
-	}
-
-	defer row.Close()
-
-	for row.Next() {
-		err = bc.DB.ScanRows(row, &books)
-
-		if err != nil {
-
-			res.WithMessage(err.Error()).InternalServerError()
-
-			ctx.JSON(http.StatusInternalServerError, res)
-			return
-		}
 	}
 
 	for i := 0; i < len(books); i++ {

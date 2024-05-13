@@ -96,7 +96,7 @@ func (ac *AuthController) Login(ctx *gin.Context) {
 	}
 
 	hour, _ := strconv.Atoi(utils.Env("JWT_EXP", "24"))
-	fmt.Println(hour)
+
 	createToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"username": username,
 		"exp":      time.Now().Add(time.Hour * time.Duration(hour)).Unix(),
